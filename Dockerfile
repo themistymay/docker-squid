@@ -50,8 +50,13 @@ RUN ./configure --prefix=/usr \
                 --sysconfdir=/etc/squid \
                 --with-openssl \
                 --enable-ssl-crtd \
+                --enable-linux-netfilter \
+                --enable-icap-client \
+                --enable-snmp \
+                --enable-follow-x-forwarded-for \
                 --with-default-user=proxy \
                 --with-logdir=/var/log \
                 --with-pidfile=/var/run/squid.pid
+
 RUN make
 RUN make install
