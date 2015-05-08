@@ -1,0 +1,6 @@
+*.cert
+*.csr
+*.private
+
+.DS_Store
+log/
