@@ -31,12 +31,17 @@ RUN ./configure --prefix=/usr \
                 --enable-icap-client \
                 --enable-snmp \
                 --enable-follow-x-forwarded-for \
-                --with-default-user=proxy \
-                --with-logdir=/var/log \
+                --with-default-user=squid \
+                --with-logdir=/var/log/squid \
                 --with-pidfile=/var/run/squid.pid
 
 RUN make
 RUN make install
+
+RUN groupadd squid
+RUN useradd -g squid --no-create-home -s /bin/false squid
+
+ADD squid.conf /etc/squid/squid.conf
 
 RUN mkdir /certs
 WORKDIR /certs
@@ -45,6 +50,25 @@ ADD inet.cert inet.cert
 ADD inet.csr inet.csr
 ADD inet.private inet.private
 
+RUN /usr/lib/squid/ssl_crtd -c -s /var/lib/ssl_db
+RUN chown squid:squid /var/lib/ssl_db
+
+RUN touch /var/run/squid.pid
+RUN chmod 755 /var/run/squid.pid
+RUN chown squid:squid /var/run/squid.pid
+
+# fix permissions on the log dir
+RUN mkdir -p /var/log/squid
+RUN chmod -R 755 /var/log/squid
+RUN chown -R squid:squid /var/log/squid
+
+# fix permissions on the cache dir
+RUN mkdir -p /var/spool/squid
+RUN chown -R squid:squid /var/spool/squid
+
+EXPOSE 3128
+
+# sudo -u squid squid -NYC -d 1 -f /etc/squid/squid.conf
 # RUN openssl genrsa -out inet.private 2048
 # RUN openssl req -new -key inet.private -out inet.csr
 # RUN openssl x509 -req -days 3652 -in inet.csr -signkey inet.private -out inet.cert
